@@ -9,6 +9,7 @@ _script_location_ = Path(__file__).parent.resolve()
 _output_location_ = _script_location_ / "output"
 _url_rgx_ = re.compile(r"\.(\w+)$")
 _name_rgx_ = re.compile(r"(\d+)\s+dosor", re.IGNORECASE)
+_nikotinfritt_ = re.compile(r"nikotinfritt", re.IGNORECASE)
 
 async def make_soup(session: aiohttp.ClientSession, url: str, type: str, timeout: int=10) -> BeautifulSoup:
     async with session.get(url, timeout=timeout) as response:
@@ -23,8 +24,12 @@ async def fetch_urls(session: aiohttp.ClientSession) -> list[str]:
     return list(set(filter(lambda text: not _url_rgx_.search(text), texts)))
 
 def parse_product(product: dict[str, str]) -> dict[str, any] | None:
-    best_offer = None
     name = product.get("name", "")
+
+    if _nikotinfritt_.search(name):
+        return None
+    
+    best_offer = None
     match_multiplier = _name_rgx_.findall(name)
     name_multiplier = 1 if len(match_multiplier) == 0 else int(match_multiplier[0])
 
